@@ -112,21 +112,20 @@ export async function createOrder(cartState: ICartState) {
   } else {
     const { data: userData } = await supabase.auth.getUser();
     const user = userData?.user;
-    if (!user) {
-      throw new Error('User not authenticated');
+    // Allow guest checkout: don't require user, don't set userid if not logged in
+    const orderPayload: any = {
+      cartitems: cartState.cartitems,
+      totalquantity: cartState.totalquantity,
+      totalprice: cartState.totalprice,
+      checkoutdata: cartState.checkoutdata,
+      status: cartState.status || 'Pending'
+    };
+    if (user) {
+      orderPayload.userid = user.id;
     }
     const { data, error } = await supabase
       .from('orders')
-      .insert([
-        {
-          cartitems: cartState.cartitems,
-          totalquantity: cartState.totalquantity,
-          totalprice: cartState.totalprice,
-          checkoutdata: cartState.checkoutdata,
-          userid: user.id,
-          status: cartState.status || 'Pending' // Capitalized to match enum/UI
-        }
-      ])
+      .insert([orderPayload])
       .select(); // return inserted row(s)
 
     if (error) {
@@ -147,6 +146,7 @@ export async function getOrders(): Promise<IOrder[] | null> {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData?.user;
   if (!user) {
+    // For guests, return empty order list (no throw)
     return [];
   }
   const { data, error } = await supabase
