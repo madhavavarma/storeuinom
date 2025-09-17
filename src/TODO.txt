@@ -1,0 +1,59 @@
+ORDER 
+
+// Order Date & Time
+// Customer Name
+// Billing Address (if different)
+// Shipping Fee
+// Delivery Instructions or Notes
+// Tracking Information (if shipped)
+// Estimated Delivery Date354918
+// Order History / Timeline (placed, processed, shipped, delivered, etc.)
+// Invoice Download Link
+// Actions (Cancel, Return, Reorder, Contact Support)
+// Rating and Reviews
+
+
+HOME
+
+Messages/Updates to customers with a scrolling Messages
+Upcomming Products
+Client Requested Products
+
+
+ADMIN
+
+Based on your project structure and code, here are the main modules you should include in an admin website for this store:
+
+1. Authentication & Admin Management
+Admin login/logout
+Admin user management (add/remove admins, change roles)
+2. Dashboard
+Overview of key metrics (orders, sales, users, products, etc.)
+Recent activity
+3. Orders Management
+View all orders (with filters: status, date, customer, etc.)
+View order details (items, customer info, shipping, payment, status)
+Update order status (pending, shipped, delivered, cancelled, etc.)
+Cancel/refund orders
+4. Products Management
+List all products
+Add/edit/delete products
+Manage product images, categories, pricing, stock, variants/options
+5. Categories Management
+List all categories
+Add/edit/delete categories
+6. Customers/Users Management
+List all users/customers
+View customer details and order history
+Edit or deactivate users (if needed)
+7. App Settings
+Manage store settings (name, logo, contact info, payment methods, etc.)
+Manage banners, featured products, etc.
+8. Content Management (Optional)
+Manage FAQs, About Us, and other static pages
+9. Reports & Analytics (Optional)
+Sales reports, product performance, customer analytics
+10. Notifications/Emails (Optional)
+View and manage system notifications or email templates
+
+
