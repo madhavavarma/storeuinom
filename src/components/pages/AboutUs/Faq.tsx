@@ -2,7 +2,6 @@ import { Fragment, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { motion } from "framer-motion"
-import Footer from "@/components/base/Footer"
 import Header from "@/components/base/Header"
 
 const components2: { title: string; href: string; description: string }[] = [
@@ -123,7 +122,7 @@ export default function FAQPage() {
             )}
         </div>
         </div>
-        <Footer></Footer>
+  {/* Footer removed for centralized layout */}
     </Fragment>
   )
 }

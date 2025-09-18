@@ -17,27 +17,27 @@ export default function ThankYouPage() {
   }, [location]);
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-green-100 via-lime-200 to-yellow-100 text-center p-6">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-green-100 via-lime-200 to-yellow-100">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="bg-white p-10 rounded-3xl shadow-2xl max-w-md w-full"
+        className="w-full flex flex-col items-center justify-center py-20 px-4"
       >
         <motion.div
           initial={{ rotate: -30, scale: 0 }}
           animate={{ rotate: 0, scale: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="flex justify-center mb-6"
+          className="flex justify-center mb-8"
         >
-          <CheckCircle className="text-green-600 w-16 h-16" />
+          <CheckCircle className="text-green-600 w-24 h-24 md:w-32 md:h-32" />
         </motion.div>
 
         <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-3xl font-extrabold text-green-800 mb-2"
+          className="text-4xl md:text-6xl font-extrabold text-green-800 mb-4"
         >
           Thank You!
         </motion.h1>
@@ -46,9 +46,9 @@ export default function ThankYouPage() {
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-gray-600 text-sm"
+          className="text-gray-700 text-lg md:text-2xl mb-6 max-w-2xl mx-auto"
         >
-          Your order was placed successfully. We’ll get started on it right away!
+          Your order was placed successfully.<br className="hidden md:block" /> We’ll get started on it right away!
         </motion.p>
 
         {orderId && (
@@ -56,10 +56,10 @@ export default function ThankYouPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="mt-4 p-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800"
+            className="mt-2 mb-8 px-6 py-4 bg-green-50 border border-green-200 rounded-2xl text-lg text-green-800 font-semibold mx-auto max-w-xl shadow-sm"
           >
-            <p className="font-semibold">Order ID:</p>
-            <p className="break-all text-xs text-gray-700">{orderId}</p>
+            <span className="mr-2">Order ID:</span>
+            <span className="break-all text-gray-700 font-mono text-base">{orderId}</span>
           </motion.div>
         )}
 
@@ -67,11 +67,11 @@ export default function ThankYouPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-6"
+          className="mt-2"
         >
           <Button
             onClick={navigationHelper.goToHome}
-            className="bg-[#5DBF13] hover:bg-green-700 text-white px-6 py-2 rounded-xl shadow-md"
+            className="bg-[#5DBF13] hover:bg-green-700 text-white px-10 py-4 rounded-2xl shadow-lg text-lg font-bold tracking-wide"
           >
             Back to Home
           </Button>

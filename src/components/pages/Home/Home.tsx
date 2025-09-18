@@ -1,5 +1,4 @@
 import { Fragment } from "react/jsx-runtime";
-import Footer from "../../base/Footer";
 import ProductCarousel from "./ProductCarousel";
 import MainCarousel from "../../base/HeroCarousel";
 import Header from "@/components/base/Header";
@@ -12,9 +11,7 @@ import { RootState } from '@/store/Store';
 const Home: React.FC = () => {
   return (
     <Fragment>
-
       <Header />
-      
       <section >
         <MainCarousel />
         <Features />
@@ -22,7 +19,6 @@ const Home: React.FC = () => {
         <MiniProductList />
         <MainCarousel />
       </section>
-
       <section className="">
         {(() => {
           const appSettings = useSelector((state: RootState) => state.AppSettings);
@@ -41,7 +37,6 @@ const Home: React.FC = () => {
           );
         })()}
       </section>
-      <Footer />
     </Fragment>
   );
 };

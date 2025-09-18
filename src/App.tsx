@@ -1,6 +1,7 @@
 import './App.css'
 import 'tailwindcss/tailwind.css'
 import Routing from './Routing';
+import Footer from './components/base/Footer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
 import { IProduct } from './interfaces/IProduct';
@@ -76,7 +77,7 @@ const App: React.FC = () => {
   }, [dispatch]);
   
   return (
-    <main className='bg-[#fff]' style={{ maxWidth: '1300px', margin: '0 auto' }}>
+    <main className='bg-[#fff] flex flex-col flex-1' style={{ maxWidth: "1300px", margin: "0 auto", minHeight: "100vh" }}>
       <Routing />
 
       {/* Product Detail Drawer */}
@@ -87,7 +88,8 @@ const App: React.FC = () => {
       )}
 
       <CartSynk />
-      
+
+      <Footer />
     </main>
   );
 };

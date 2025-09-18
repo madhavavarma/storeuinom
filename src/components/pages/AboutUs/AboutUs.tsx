@@ -1,7 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, MessageCircle } from "lucide-react"
 import { motion } from "framer-motion"
-import Footer from "@/components/base/Footer"
 import { Fragment } from "react"
 import Header from "@/components/base/Header"
 
@@ -113,7 +112,7 @@ export default function AboutUs() {
             </motion.div>
         </div>
 
-    <Footer />
+    {/* Footer removed for centralized layout */}
     </Fragment>
    
   )

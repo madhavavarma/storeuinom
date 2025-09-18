@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import Product2 from "../Home/Product2";
 import Header from "@/components/base/Header";
-import Footer from "@/components/base/Footer";
 import { Search, ShoppingCartIcon } from "lucide-react";
 import { FloatingButtonWithTT } from "../Shared/FloatingButtonsWithTT";
 import { useSearchParams } from "react-router-dom";
@@ -173,7 +172,7 @@ const ProductList = () => {
         </div>
       )}
 
-      <Footer />
+  {/* Footer removed for centralized layout */}
     </Fragment>
   );
 };

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/supabaseClient';
 import Header from '../base/Header';
-import Footer from '../base/Footer';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -92,7 +91,7 @@ const ResetPassword = () => {
           {message && <div className="text-center text-sm text-gray-500 mt-2">{message}</div>}
         </form>
       </div>
-      <Footer />
+  {/* Footer removed for centralized layout */}
     </div>
   );
 };

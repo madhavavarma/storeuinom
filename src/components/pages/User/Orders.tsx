@@ -8,7 +8,6 @@ import { IState } from "@/store/interfaces/IState";
 import { OrdersActions } from "@/store/OrdersSlice";
 import OrderDrawer from "./OrderDrawer";
 import Header from "@/components/base/Header";
-import Footer from "@/components/base/Footer";
 import OrderSummary from "./OrderSummary";
 import { getOrders, deleteOrder } from "@/helpers/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -346,7 +345,7 @@ export default function OrderList() {
       <OrderDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
         <OrderSummary />
       </OrderDrawer>
-      <Footer />
+  {/* Footer removed for centralized layout */}
     </Fragment>
   );
 }
