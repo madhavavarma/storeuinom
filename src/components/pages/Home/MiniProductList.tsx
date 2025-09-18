@@ -10,6 +10,8 @@ import { IState } from "@/store/interfaces/IState";
 const MiniProductList = () => {
   const products = useSelector((state: IState) => state.Products.products);
   const [showCart, setShowCart] = useState(false);
+  // Track if cart drawer has been auto-opened after first add
+  const hasAutoOpenedRef = useRef(false);
 
   const cartitems = useSelector((state: IState) => state.Cart.cartitems);
   const cartItemCount = cartitems?.reduce((total, item) => total + item.quantity, 0);
@@ -21,6 +23,15 @@ const MiniProductList = () => {
     if (prevCartRef.current !== cartItemCount) {
       setShake(true);
       const timer = setTimeout(() => setShake(false), 500);
+      // Auto-open cart drawer only when going from 0 to 1 item, and only once
+      if (
+        prevCartRef.current === 0 &&
+        cartItemCount === 1 &&
+        !hasAutoOpenedRef.current
+      ) {
+        setShowCart(true);
+        hasAutoOpenedRef.current = true;
+      }
       prevCartRef.current = cartItemCount;
       return () => clearTimeout(timer);
     }

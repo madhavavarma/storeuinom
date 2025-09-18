@@ -1,9 +1,20 @@
+
 import { Card, CardContent } from '../ui/card';
 import { ShoppingCartIcon, DollarSignIcon, HeadphonesIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getAppSettings } from '@/helpers/api';
 
 const Footer = () => {
+  const [siteTitle, setSiteTitle] = useState('');
+
+  useEffect(() => {
+    getAppSettings().then(settings => {
+      setSiteTitle(settings?.branding?.siteTitle || '');
+    });
+  }, []);
+
   return (
-    <footer className="dark-footer skin-dark-footer style-2 flex flex-col justify-between">
+    <footer className="dark-footer skin-dark-footer style-2 flex flex-col justify-between mt-auto w-full">
       {/* Before Footer */}
       <div className="before-footer bg-gray-900 pt-4 hidden">
         <div className="flex flex-wrap justify-between gap-2">
@@ -128,7 +139,7 @@ const Footer = () => {
           <div className="flex flex-col lg:flex-row justify-between items-center text-center lg:text-left">
             {/* Footer Left */}
             <div className="text-gray-400 mb-2 lg:mb-0">
-              <p className="mb-0">© Copyright 2020 Farmers Vibe.Designed By <a href="https://bootstrapdesigns.net" className="text-green-500">Madhava</a>.</p>
+              <p className="mb-0">© Copyright 2020 {siteTitle}. Designed By <a href="https://bootstrapdesigns.net" className="text-green-500">Madhava</a>.</p>
             </div>
 
             {/* Footer Social Links */}

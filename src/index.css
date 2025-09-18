@@ -1,3 +1,14 @@
+/* Sticky footer layout for main app container */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

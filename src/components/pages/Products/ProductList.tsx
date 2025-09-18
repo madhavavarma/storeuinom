@@ -56,11 +56,22 @@ const ProductList = () => {
   // 💥 Shake animation state
   const [shake, setShake] = useState(false);
   const prevCartRef = useRef<number>(cartItemCount);
+  // Track if cart drawer has been auto-opened after first add
+  const hasAutoOpenedRef = useRef(false);
 
   useEffect(() => {
     if (prevCartRef.current !== cartItemCount) {
       setShake(true);
       const timer = setTimeout(() => setShake(false), 500);
+      // Auto-open cart drawer only when going from 0 to 1 item, and only once
+      if (
+        prevCartRef.current === 0 &&
+        cartItemCount === 1 &&
+        !hasAutoOpenedRef.current
+      ) {
+        setShowCart(true);
+        hasAutoOpenedRef.current = true;
+      }
       prevCartRef.current = cartItemCount;
       return () => clearTimeout(timer);
     }
