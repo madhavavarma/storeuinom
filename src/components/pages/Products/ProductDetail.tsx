@@ -102,9 +102,15 @@ const ProductDetail = ({ product, closeRightDrawer }: IProps) => {
         </Carousel>
 
         {/* Product Title & Price */}
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-bold">{product.name}</h2>
-          <span className="text-sm font-extrabold text-white bg-green-500 px-3 py-1 rounded-md shadow-sm">₹{calculateTotalPrice()}</span>
+
+        <div className="flex flex-col gap-1 mb-2">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-bold">{product.name}</h2>
+            <span className="text-sm font-extrabold text-white bg-green-500 px-3 py-1 rounded-md shadow-sm">₹{calculateTotalPrice()}</span>
+          </div>
+          {product.shortdescription && (
+            <span className="block text-xs text-gray-500 line-clamp-1">{product.shortdescription}</span>
+          )}
         </div>
 
         {/* Variant and Quantity Card */}

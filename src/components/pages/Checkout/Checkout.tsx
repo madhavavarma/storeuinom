@@ -180,7 +180,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="bg-[#fff] p-4 max-w-7xl mx-auto space-y-6 mt-8">
+  <div className="bg-[#fff] p-4 sm:p-6 md:p-8 w-full mx-auto space-y-8 mt-8 rounded-lg shadow-lg" >
       <div className="flex justify-between items-center">
         <Button
           variant="ghost"
@@ -214,8 +214,8 @@ export default function CheckoutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="bg-green-50 border-green-200">
-              <CardContent className="p-4 space-y-4">
+            <Card className="bg-green-50 border-green-200 w-full" style={{minWidth: '100%', maxWidth: '100%'}}>
+              <CardContent className="p-4 space-y-4 w-full sm:max-w-full lg:min-w-[500px] lg:w-auto">
                 <h2 className="text-lg font-semibold text-green-800 flex-row  pb-3 border-b">
                   🛒 Order Items
                   {/* Product & Item Count */}
@@ -242,9 +242,14 @@ export default function CheckoutPage() {
 
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-800 truncate">
-                        {item.product.name}
-                      </p>
+                      <div className="flex flex-col">
+                        <p className="font-medium text-gray-800 truncate">
+                          {item.product.name}
+                        </p>
+                        {item.product.shortdescription && (
+                          <span className="block text-xs text-gray-500 line-clamp-1">{item.product.shortdescription}</span>
+                        )}
+                      </div>
                       {item.selectedOptions &&
                         Object.entries(item.selectedOptions).map(([variantName, option]) => (
                           <p key={variantName} className="text-gray-500 text-xs">

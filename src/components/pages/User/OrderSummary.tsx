@@ -279,9 +279,14 @@ export default function OrderSummary() {
                     className="w-16 h-16 object-cover rounded-md"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-800 truncate">
-                      {item.product.name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-800 truncate">
+                        {item.product.name}
+                      </p>
+                      {item.product.shortdescription && (
+                        <span className="text-xs text-gray-500 line-clamp-1">{item.product.shortdescription}</span>
+                      )}
+                    </div>
                     {item.selectedOptions &&
                       Object.entries(item.selectedOptions).map(([variantName, option]) => (
                         <p key={variantName} className="text-gray-500 text-xs">

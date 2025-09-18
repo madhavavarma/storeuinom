@@ -46,7 +46,12 @@ export default function ShoppingCart() {
                 className="w-12 h-12 rounded object-cover"
               />
               <div className="ml-3 text-sm">
-                <p className="font-medium">{item.product.name}</p>
+                <div className="flex flex-col">
+                  <p className="font-medium">{item.product.name}</p>
+                  {item.product.shortdescription && (
+                    <span className="block text-xs text-gray-500 line-clamp-1 mt-1">{item.product.shortdescription}</span>
+                  )}
+                </div>
                 {/* Selected Options */}
                 {item.selectedOptions &&
                   Object.entries(item.selectedOptions).map(
