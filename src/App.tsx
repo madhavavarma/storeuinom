@@ -77,7 +77,7 @@ const App: React.FC = () => {
   }, [dispatch]);
   
   return (
-    <main className='bg-[#fff] flex flex-col flex-1' style={{ maxWidth: "1300px", margin: "0 auto", minHeight: "100vh" }}>
+    <main className="bg-[#fff] flex flex-col flex-1 w-full min-h-screen px-2 sm:px-4 md:px-8">
       <Routing />
 
       {/* Product Detail Drawer */}
