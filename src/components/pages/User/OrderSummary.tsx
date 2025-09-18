@@ -56,15 +56,7 @@ export default function OrderSummary() {
   const dispatch = useDispatch();
   const checkoutData = useSelector((state: IState) => state.Orders.showOrder?.checkoutdata);
   const isPending = cart?.status === 'Pending';
-  const [formData, setFormData] = useState<ICheckout>({
-    phone: "",
-    email: "",
-    whatsapp: "",
-    address: "",
-    city: "",
-    pincode: "",
-    paymentMethod: "cod"
-  });
+  const [formData, setFormData] = useState<any>({});
   const [sameAsPhone, setSameAsPhone] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
   const [isSendingEmail, setIsSendingEmail] = useState(false);
@@ -72,7 +64,7 @@ export default function OrderSummary() {
   useEffect(() => {
     getAppSettings().then((settings) => {
       setAppSettings(settings);
-      // Build initial form state from config
+      // Build initial form state from config (dynamic)
       const initial: any = {};
       settings?.branding?.checkoutSections?.forEach(section => {
         section.fields.forEach(field => {
@@ -101,9 +93,9 @@ export default function OrderSummary() {
     setSameAsPhone(formData.whatsapp === formData.phone && formData.whatsapp !== "");
   }, [formData]);
 
-  const handleChange = (field: keyof ICheckout, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setFieldErrors((prev) => ({ ...prev, [field]: false }));
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev: Record<string, any>) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev: Record<string, boolean>) => ({ ...prev, [field]: false }));
   };
 
   const handleSameAsPhoneToggle = () => {
@@ -116,15 +108,15 @@ export default function OrderSummary() {
   };
 
   const handlePlaceOrder = async () => {
-    const { phone, email, address, city, pincode } = formData;
+    // Dynamic validation from config
     const errors: { [key: string]: boolean } = {};
-
-    if (!phone) errors.phone = true;
-    if (!email) errors.email = true;
-    if (!address) errors.address = true;
-    if (!city) errors.city = true;
-    if (!pincode) errors.pincode = true;
-
+    appSettings?.branding?.checkoutSections?.forEach(section => {
+      section.fields.forEach(field => {
+        if (field.required && !formData[field.name]) {
+          errors[field.name] = true;
+        }
+      });
+    });
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       toast.error("Please fill all required fields");
@@ -132,16 +124,14 @@ export default function OrderSummary() {
     }
 
     const orderId = cart?.id || "";
-
     if (cart) {
-      console.log("Updating checkout data in store:", formData);
       dispatch(OrdersActions.updateCheckoutData(formData));
     }
-
-    var data = JSON.parse(JSON.stringify(cart)) as IOrder; // Deep clone to avoid mutating store
-    data.checkoutdata = formData;
-
-    updateOrder(orderId, data as IOrder).then(async (order) => {
+  var data = JSON.parse(JSON.stringify(cart)) as IOrder; // Deep clone to avoid mutating store
+  data.checkoutdata = formData;
+  // Remove id from update payload to avoid identity column error
+  if ('id' in data) delete data.id;
+  updateOrder(orderId, data as IOrder).then(async (order) => {
       if (!order) {
         toast.error("Failed to update order. Please try again.");
         return;
@@ -153,22 +143,15 @@ export default function OrderSummary() {
           "service_dek6sgr",
           "template_ql4ymg9",
           {
-            to_email: email,
-            user_phone: phone,
-            user_email: email,
-            user_address: address,
-            user_city: city,
-            user_pincode: pincode,
+            ...formData,
             cart_items: JSON.stringify(cartitems, null, 2),
             total_amount: totalAmount.toFixed(2),
             order_id: orderId,
           },
           "efiQJ5NNt1J3GJD--"
         );
-        console.log("Order updated successfully! Confirmation email sent.");
       } catch (error) {
         emailFailed = true;
-        console.error("Email sending error:", error);
       } finally {
         setIsSendingEmail(false);
         dispatch(OrdersActions.clearCart());
