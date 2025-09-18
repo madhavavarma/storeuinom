@@ -7,9 +7,6 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { motion } from "framer-motion";
 import {
-  Phone,
-  MapPin,
-  Wallet,
   Trash2,
   Minus,
   Plus,
@@ -23,14 +20,35 @@ import { IOption } from "@/interfaces/IProduct";
 import { ProductActions } from "@/store/ProductSlice";
 import emailjs from "@emailjs/browser";
 import { ICheckout } from "@/interfaces/ICheckout";
+import { getAppSettings } from "@/helpers/api";
+import { IAppSettings } from "@/interfaces/IAppSettings";
 import { deleteOrder, updateOrder } from "@/helpers/api";
 import { IOrder, OrdersActions } from "@/store/OrdersSlice";
 
+
 export default function OrderSummary() {
+  // Handles order cancellation
+  const handleCancelOrder = async () => {
+    if (!cart?.id) return;
+    setDeleting(true);
+    try {
+      const result = await deleteOrder(cart.id);
+      if (result) {
+        toast.success("Order cancelled successfully.");
+        setShowCancelDialog(false);
+        navigationHelper.goToHome();
+      } else {
+        toast.error("Failed to cancel order. Please try again.");
+      }
+    } catch (error) {
+      toast.error("Error cancelling order. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  
+  const [appSettings, setAppSettings] = useState<IAppSettings | null>(null);
   const cart = useSelector((state: IState) => state.Orders.showOrder);
   const cartitems = useSelector((state: IState) => state.Orders.showOrder?.cartitems || []);
   const totalAmount = cartitems?.reduce((acc, item) => acc + item.totalPrice, 0);
@@ -38,40 +56,46 @@ export default function OrderSummary() {
   const dispatch = useDispatch();
   const checkoutData = useSelector((state: IState) => state.Orders.showOrder?.checkoutdata);
   const isPending = cart?.status === 'Pending';
-  
-
-  // Cancel order logic (copied from Orders.tsx)
-  const handleCancelOrder = async () => {
-    setDeleting(true);
-     deleteOrder(cart?.id || -1)
-    // await fetchOrders();
-    setTimeout(() => {
-      setDeleting(false);
-      setShowCancelDialog(false);
-      window.location.reload(); // Or dispatch an action to refresh orders
-    }, 1200);
-  };
-  
-
-  useEffect(() => {    
-    dispatch(ProductActions.setProductDetail(null));
-  }, []);
-
-  const [formData, setFormData] = useState<ICheckout>(
-    checkoutData || {
-      phone: "",
-      email: "",
-      whatsapp: "",
-      address: "",
-      city: "",
-      pincode: "",
-      paymentMethod: "cod",
-    }
-  );
-
+  const [formData, setFormData] = useState<ICheckout>({
+    phone: "",
+    email: "",
+    whatsapp: "",
+    address: "",
+    city: "",
+    pincode: "",
+    paymentMethod: "cod"
+  });
   const [sameAsPhone, setSameAsPhone] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+  useEffect(() => {
+    getAppSettings().then((settings) => {
+      setAppSettings(settings);
+      // Build initial form state from config
+      const initial: any = {};
+      settings?.branding?.checkoutSections?.forEach(section => {
+        section.fields.forEach(field => {
+          if (checkoutData && checkoutData[field.name] !== undefined) {
+            initial[field.name] = checkoutData[field.name];
+          } else if ((field.type === "radio" || field.type === "dropdown") && Array.isArray((field as any).options) && (field as any).options.length > 0) {
+            if (field.defaultValue !== undefined) {
+              initial[field.name] = field.defaultValue;
+            } else {
+              const defaultOpt = (field as any).options.find((o: any) => o.defaultValue) || (field as any).options.find((o: any) => !o.disabled);
+              initial[field.name] = defaultOpt ? defaultOpt.value : "";
+            }
+          } else if (field.type === "checkbox") {
+            initial[field.name] = field.defaultValue !== undefined ? field.defaultValue : false;
+          } else {
+            initial[field.name] = field.defaultValue !== undefined ? field.defaultValue : "";
+          }
+        });
+      });
+      setFormData(initial);
+    });
+    dispatch(ProductActions.setProductDetail(null));
+  }, []);
 
   useEffect(() => {
     setSameAsPhone(formData.whatsapp === formData.phone && formData.whatsapp !== "");
@@ -214,30 +238,15 @@ export default function OrderSummary() {
         </CardContent>
       </Card>
       <div className="flex justify-between items-center">
-        {/* <Button
-          variant="ghost"
-          className="flex items-center text-sm text-gray-600 hover:text-green-700"
-          onClick={() => navigationHelper.goToProducts()}
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" /> Continue Shopping
-        </Button> */}
-
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="w-full text-center"
         >
-          {/* <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-green-600 to-lime-500 text-transparent bg-clip-text flex justify-center items-center gap-2">
-            <Wallet className="w-8 h-8" />
-             Summary
-          </h1> */}
-          {/* <div className="mt-2 h-1 w-24 bg-green-400 mx-auto rounded-full" /> */}
         </motion.div>
-
         <div className="w-32" />
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         {/* Left: Cart Summary */}
         <div className="space-y-6">
@@ -250,7 +259,6 @@ export default function OrderSummary() {
               <CardContent className="p-4 space-y-4">
                 <h2 className="text-lg font-semibold text-green-800 flex-row  pb-3 border-b">
                   🛒 Order Items     
-                  {/* Product & Item Count */}
                   <div className="pl-1 flex items-center gap-2 bg-green-50 rounded-full text-sm font-medium flex-shrink-0">
                     <ShoppingBag className="w-4 h-4" />
                     {cartitems.length} Product{cartitems.length > 1 && "s"}
@@ -265,14 +273,11 @@ export default function OrderSummary() {
                   key={idx}
                   className="flex gap-4 border-b py-4 text-sm relative"
                 >
-                  {/* Product Image */}
                   <img
                     src={item.product.imageUrls?.[0]}
                     alt={item.product.name}
                     className="w-16 h-16 object-cover rounded-md"
                   />
-                
-                  {/* Product Info */}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-800 truncate">
                       {item.product.name}
@@ -283,10 +288,7 @@ export default function OrderSummary() {
                           {variantName}: <span className="font-medium">{option?.name}</span>
                         </p>
                       ))}
-                
-                    {/* Quantity & Price Section */}
                     <div className="flex justify-between items-center mt-3 flex-wrap gap-2">
-                      {/* Quantity Controls */}
                       <div className="flex items-center bg-gray-100 rounded-full px-2 py-1">
                         <Button
                           size="icon"
@@ -301,11 +303,9 @@ export default function OrderSummary() {
                         >
                           <Minus size={14} />
                         </Button>
-                
                         <span className="text-sm font-semibold w-6 text-center">
                           {item.quantity}
                         </span>
-                
                         <Button
                           size="icon"
                           className="w-7 h-7 bg-[#5DBF13] text-white rounded-full hover:bg-green-700"
@@ -320,15 +320,11 @@ export default function OrderSummary() {
                           <Plus size={14} />
                         </Button>
                       </div>
-                
-                      {/* Price */}
                       <span className="text-sm font-extrabold text-white bg-green-500 px-3 py-1 rounded-md shadow-sm">
                         ₹{item.totalPrice}
                       </span>
                     </div>
                   </div>
-                
-                  {/* Delete Button */}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -338,129 +334,123 @@ export default function OrderSummary() {
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
-                
-                
-                
                 ))}
-                 <div className="pt-2 flex items-center justify-between text-green-800 font-semibold gap-4 flex-wrap sm:flex-nowrap">
-  
-  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-    {/* Label */}
-    <span className="text-base whitespace-nowrap">Total</span>
-
-    
-  </div>
-
-  {/* Amount */}
-  <span className="text-sm font-extrabold text-white bg-green-500 px-3 py-1 rounded-md shadow-sm">
-    ₹{totalAmount}
-  </span>
-</div>
-
-
+                <div className="pt-2 flex items-center justify-between text-green-800 font-semibold gap-4 flex-wrap sm:flex-nowrap">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                    <span className="text-base whitespace-nowrap">Total</span>
+                  </div>
+                  <span className="text-sm font-extrabold text-white bg-green-500 px-3 py-1 rounded-md shadow-sm">
+                    ₹{totalAmount}
+                  </span>
+                </div>
               </CardContent>
             </Card>
           </motion.div>
         </div>
-
-        {/* Right: Address + Contact */}
+        {/* Right: Dynamic Checkout Sections */}
         <div className="space-y-6">
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Phone className="w-4 h-4" /> Contact
-              </h2>
-              <Input
-                type="tel"
-                placeholder="Phone Number"
-                value={formData.phone}
-                onChange={(e) => handleChange("phone", e.target.value)}
-                className={fieldErrors.phone ? "border-red-500" : ""}
-                disabled={!isPending}
-              />
-              <Input
-                type="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={(e) => handleChange("email", e.target.value)}
-                className={fieldErrors.email ? "border-red-500" : ""}
-                disabled={!isPending}
-              />
-              <Input
-                type="text"
-                placeholder="WhatsApp (Optional)"
-                value={formData.whatsapp}
-                onChange={(e) => handleChange("whatsapp", e.target.value)}
-                disabled={!isPending}
-              />
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={sameAsPhone}
-                  onChange={handleSameAsPhoneToggle}
-                  disabled={!isPending}
-                />
-                Same as phone number
-              </label>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <MapPin className="w-4 h-4" /> Shipping Address
-              </h2>
-              <Input
-                placeholder="Full Address"
-                value={formData.address}
-                onChange={(e) => handleChange("address", e.target.value)}
-                className={fieldErrors.address ? "border-red-500" : ""}
-                disabled={!isPending}
-              />
-              <Input
-                placeholder="City"
-                value={formData.city}
-                onChange={(e) => handleChange("city", e.target.value)}
-                className={fieldErrors.city ? "border-red-500" : ""}
-                disabled={!isPending}
-              />
-              <Input
-                placeholder="Pincode"
-                value={formData.pincode}
-                onChange={(e) => handleChange("pincode", e.target.value)}
-                className={fieldErrors.pincode ? "border-red-500" : ""}
-                disabled={!isPending}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Wallet className="w-4 h-4" /> Payment Method
-              </h2>
-              <RadioGroup
-                value={formData.paymentMethod}
-                onValueChange={(val) => handleChange("paymentMethod", val)}
-                className="space-y-2"
-                disabled={!isPending}
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="cod" id="cod" />
-                  <label htmlFor="cod" className="text-sm">
-                    Cash on Delivery
+          {appSettings?.branding?.checkoutSections?.map((section) => (
+            <Card key={section.id}>
+              <CardContent className="p-4 space-y-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  {section.title}
+                </h2>
+                {section.fields.map((field) => {
+                  if (field.type === "text") {
+                    return (
+                      <Input
+                        key={field.id ?? field.name}
+                        type={field.name === "email" ? "email" : "text"}
+                        placeholder={field.label}
+                        value={formData[field.name] || ""}
+                        onChange={(e) => handleChange(field.name as any, e.target.value)}
+                        className={fieldErrors[field.name] ? "border-red-500" : ""}
+                        disabled={!isPending || !!field.disabled}
+                        required={!!field.required}
+                      />
+                    );
+                  }
+                  if (field.type === "textarea") {
+                    return (
+                      <textarea
+                        key={field.id ?? field.name}
+                        placeholder={field.label}
+                        value={formData[field.name] || ""}
+                        onChange={(e) => handleChange(field.name as any, e.target.value)}
+                        className={`w-full rounded border px-3 py-2 ${fieldErrors[field.name] ? "border-red-500" : "border-gray-300"}`}
+                        rows={3}
+                        disabled={!isPending || !!field.disabled}
+                        required={!!field.required}
+                      />
+                    );
+                  }
+                  if (field.type === "radio") {
+                    return (
+                      <RadioGroup
+                        key={field.id ?? field.name}
+                        value={formData[field.name]}
+                        onValueChange={(val) => handleChange(field.name as any, val)}
+                        className="space-y-2"
+                        disabled={!isPending || !!field.disabled}
+                        required={!!field.required}
+                      >
+                        {('options' in field && Array.isArray(field.options)) && field.options.map((opt: any) => (
+                          <div className={`flex items-center gap-2 ${opt.disabled ? "opacity-50 cursor-not-allowed" : ""}`} key={opt.value}>
+                            <RadioGroupItem value={opt.value} id={opt.value} disabled={!!opt.disabled} />
+                            <label htmlFor={opt.value} className="text-sm">{opt.label}</label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    );
+                  }
+                  if (field.type === "dropdown") {
+                    return (
+                      <select
+                        key={field.id ?? field.name}
+                        value={formData[field.name] || ""}
+                        onChange={(e) => handleChange(field.name as any, e.target.value)}
+                        className={`w-full rounded border px-3 py-2 ${fieldErrors[field.name] ? "border-red-500" : "border-gray-300"}`}
+                        disabled={!isPending || !!field.disabled}
+                        required={!!field.required}
+                      >
+                        <option value="" disabled>{field.label}</option>
+                        {('options' in field && Array.isArray(field.options)) && field.options.map((opt: any) => (
+                          <option key={opt.value} value={opt.value} disabled={!!opt.disabled}>{opt.label}</option>
+                        ))}
+                      </select>
+                    );
+                  }
+                  if (field.type === "checkbox") {
+                    return (
+                      <label key={field.id ?? field.name} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={!!formData[field.name]}
+                          onChange={e => handleChange(field.name as any, e.target.checked ? "true" : "false")}
+                          disabled={!isPending || !!field.disabled}
+                          required={!!field.required}
+                        />
+                        {field.label}
+                      </label>
+                    );
+                  }
+                  return null;
+                })}
+                {/* Special: Same as phone checkbox for WhatsApp (optional, only if section has a whatsapp field) */}
+                {section.fields.some(f => f.name === "whatsapp") && (
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={sameAsPhone}
+                      onChange={handleSameAsPhoneToggle}
+                      disabled={!isPending}
+                    />
+                    Same as phone number
                   </label>
-                </div>
-                <div className="flex items-center gap-2 opacity-50 cursor-not-allowed">
-                  <RadioGroupItem value="upi" id="upi" disabled />
-                  <label htmlFor="upi" className="text-sm">
-                    UPI (Coming Soon)
-                  </label>
-                </div>
-              </RadioGroup>
-            </CardContent>
-          </Card>
-
+                )}
+              </CardContent>
+            </Card>
+          ))}
           {isPending && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -476,8 +466,6 @@ export default function OrderSummary() {
               </Button>
             </motion.div>
           )}
-
-          {isPending && (
         <>
           <Button
             className="w-full bg-red-500 hover:bg-red-700 text-white rounded-xl mb-4"
@@ -512,7 +500,7 @@ export default function OrderSummary() {
             Are you sure you want to cancel this order?
           </Dialog>
         </>
-      )}
+      
         </div>
       </div>
     </div>

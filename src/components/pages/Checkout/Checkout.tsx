@@ -17,15 +17,17 @@ import {
   PackageCheck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getAppSettings } from "@/helpers/api";
+import { IAppSettings } from "@/interfaces/IAppSettings";
 import { toast } from "sonner";
 import { CartActions } from "@/store/CartSlice";
 import { useNavigationHelper } from "@/hooks/use-navigate-helper";
 import { IOption } from "@/interfaces/IProduct";
 import { ProductActions } from "@/store/ProductSlice";
 import emailjs from "@emailjs/browser";
-import { ICheckout } from "@/interfaces/ICheckout";
 import { createOrder } from "@/helpers/api";
 import { ICartState } from "@/store/interfaces/ICartState";
+
 
 export default function CheckoutPage() {
   const cart = useSelector((state: IState) => state.Cart);
@@ -35,62 +37,78 @@ export default function CheckoutPage() {
   const dispatch = useDispatch();
   const checkoutData = useSelector((state: IState) => state.Cart.checkoutdata);
 
-  useEffect(() => {
-    dispatch(ProductActions.setProductDetail(null));
-  }, []);
-
-  const [formData, setFormData] = useState<ICheckout>(
-    checkoutData || {
-      phone: "",
-      email: "",
-      whatsapp: "",
-      address: "",
-      city: "",
-      pincode: "",
-      paymentMethod: "cod",
-    }
-  );
-
+  const [appSettings, setAppSettings] = useState<IAppSettings | null>(null);
+  const [formData, setFormData] = useState<any>({});
   const [sameAsPhone, setSameAsPhone] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+  // Load app settings from Supabase branding
+  useEffect(() => {
+    getAppSettings().then((settings) => {
+      setAppSettings(settings);
+      // Build initial form state from config
+      const initial: any = {};
+      settings?.branding?.checkoutSections?.forEach(section => {
+        section.fields.forEach(field => {
+          if (checkoutData && checkoutData[field.name] !== undefined) {
+            initial[field.name] = checkoutData[field.name];
+          } else if ((field.type === "radio" || field.type === "dropdown") && Array.isArray((field as any).options) && (field as any).options.length > 0) {
+            // Use defaultValue from field if present, else from first enabled option, else blank
+            if (field.defaultValue !== undefined) {
+              initial[field.name] = field.defaultValue;
+            } else {
+              const defaultOpt = (field as any).options.find((o: any) => o.defaultValue) || (field as any).options.find((o: any) => !o.disabled);
+              initial[field.name] = defaultOpt ? defaultOpt.value : "";
+            }
+          } else if (field.type === "checkbox") {
+            initial[field.name] = field.defaultValue !== undefined ? field.defaultValue : false;
+          } else {
+            initial[field.name] = field.defaultValue !== undefined ? field.defaultValue : "";
+          }
+        });
+      });
+      setFormData(initial);
+    });
+    dispatch(ProductActions.setProductDetail(null));
+  }, []);
 
   useEffect(() => {
     dispatch(CartActions.setCheckoutData(formData));
     setSameAsPhone(formData.whatsapp === formData.phone && formData.whatsapp !== "");
   }, [formData]);
 
-  const handleChange = (field: keyof ICheckout, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setFieldErrors((prev) => ({ ...prev, [field]: false }));
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev: Record<string, any>) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev: Record<string, boolean>) => ({ ...prev, [field]: false }));
   };
 
   const handleSameAsPhoneToggle = () => {
     const newValue = !sameAsPhone;
     setSameAsPhone(newValue);
-    setFormData((prev) => ({
+  setFormData((prev: Record<string, any>) => ({
       ...prev,
       whatsapp: newValue ? prev.phone : "",
     }));
   };
 
   const handlePlaceOrder = async () => {
-    const { phone, email, address, city, pincode } = formData;
+    // Validate required fields from config
     const errors: { [key: string]: boolean } = {};
-
-    if (!phone) errors.phone = true;
-    if (!email) errors.email = true;
-    if (!address) errors.address = true;
-    if (!city) errors.city = true;
-    if (!pincode) errors.pincode = true;
-
+    appSettings?.branding?.checkoutSections?.forEach(section => {
+      section.fields.forEach(field => {
+        if (field.required && !formData[field.name]) {
+          errors[field.name] = true;
+        }
+      });
+    });
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       toast.error("Please fill all required fields");
       return;
     }
 
-    const orderId = `${Date.now()}_${phone}`;
+  const orderId = `${Date.now()}_${formData.phone || "guest"}`;
 
     createOrder(cart as ICartState).then(async (order) => {
 
@@ -105,12 +123,12 @@ export default function CheckoutPage() {
           "service_dek6sgr",
           "template_ql4ymg9",
           {
-            to_email: email,
-            user_phone: phone,
-            user_email: email,
-            user_address: address,
-            user_city: city,
-            user_pincode: pincode,
+            to_email: formData.email,
+            user_phone: formData.phone,
+            user_email: formData.email,
+            user_address: formData.address,
+            user_city: formData.city,
+            user_pincode: formData.pincode,
             cart_items: JSON.stringify(cartitems, null, 2),
             total_amount: totalAmount.toFixed(2),
             order_id: orderId,
@@ -119,11 +137,12 @@ export default function CheckoutPage() {
         );
         console.log("Order placed successfully! Confirmation email sent.");
         dispatch(CartActions.clearCart());
-
         navigationHelper.goToThankYou(order.id || "");
       } catch (error) {
         console.error("Email sending error:", error);
         toast.error("Order placed, but confirmation email failed.");
+        dispatch(CartActions.clearCart());
+        navigationHelper.goToThankYou(order.id || "");
       } finally {
         setIsSendingEmail(false);
       }
@@ -307,94 +326,110 @@ export default function CheckoutPage() {
 
         {/* Right: Address + Contact */}
         <div className="space-y-6">
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Phone className="w-4 h-4" /> Contact
-              </h2>
-              <Input
-                type="tel"
-                placeholder="Phone Number"
-                value={formData.phone}
-                onChange={(e) => handleChange("phone", e.target.value)}
-                className={fieldErrors.phone ? "border-red-500" : ""}
-              />
-              <Input
-                type="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={(e) => handleChange("email", e.target.value)}
-                className={fieldErrors.email ? "border-red-500" : ""}
-              />
-              <Input
-                type="text"
-                placeholder="WhatsApp (Optional)"
-                value={formData.whatsapp}
-                onChange={(e) => handleChange("whatsapp", e.target.value)}
-              />
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={sameAsPhone}
-                  onChange={handleSameAsPhoneToggle}
-                />
-                Same as phone number
-              </label>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <MapPin className="w-4 h-4" /> Shipping Address
-              </h2>
-              <Input
-                placeholder="Full Address"
-                value={formData.address}
-                onChange={(e) => handleChange("address", e.target.value)}
-                className={fieldErrors.address ? "border-red-500" : ""}
-              />
-              <Input
-                placeholder="City"
-                value={formData.city}
-                onChange={(e) => handleChange("city", e.target.value)}
-                className={fieldErrors.city ? "border-red-500" : ""}
-              />
-              <Input
-                placeholder="Pincode"
-                value={formData.pincode}
-                onChange={(e) => handleChange("pincode", e.target.value)}
-                className={fieldErrors.pincode ? "border-red-500" : ""}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Wallet className="w-4 h-4" /> Payment Method
-              </h2>
-              <RadioGroup
-                value={formData.paymentMethod}
-                onValueChange={(val) => handleChange("paymentMethod", val)}
-                className="space-y-2"
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="cod" id="cod" />
-                  <label htmlFor="cod" className="text-sm">
-                    Cash on Delivery
+          {appSettings?.branding?.checkoutSections?.map((section) => (
+            <Card key={section.id}>
+              <CardContent className="p-4 space-y-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  {section.id === 1 && <Phone className="w-4 h-4" />} 
+                  {section.id === 2 && <MapPin className="w-4 h-4" />} 
+                  {section.id === 3 && <Wallet className="w-4 h-4" />} 
+                  {section.title}
+                </h2>
+                {section.fields.map((field) => {
+                  if (field.type === "text") {
+                    return (
+                      <Input
+                        key={field.id ?? field.name}
+                        type={field.name === "email" ? "email" : "text"}
+                        placeholder={field.label}
+                        value={formData[field.name] || ""}
+                        onChange={(e) => handleChange(field.name, e.target.value)}
+                        className={fieldErrors[field.name] ? "border-red-500" : ""}
+                        disabled={!!field.disabled}
+                        required={!!field.required}
+                      />
+                    );
+                  }
+                  if (field.type === "textarea") {
+                    return (
+                      <textarea
+                        key={field.id ?? field.name}
+                        placeholder={field.label}
+                        value={formData[field.name] || ""}
+                        onChange={(e) => handleChange(field.name, e.target.value)}
+                        className={`w-full rounded border px-3 py-2 ${fieldErrors[field.name] ? "border-red-500" : "border-gray-300"}`}
+                        rows={3}
+                        disabled={!!field.disabled}
+                        required={!!field.required}
+                      />
+                    );
+                  }
+                  if (field.type === "radio") {
+                    return (
+                      <RadioGroup
+                        key={field.id ?? field.name}
+                        value={formData[field.name]}
+                        onValueChange={(val) => handleChange(field.name, val)}
+                        className="space-y-2"
+                        disabled={!!field.disabled}
+                        required={!!field.required}
+                      >
+                        {('options' in field && Array.isArray(field.options)) && field.options.map((opt: any) => (
+                          <div className={`flex items-center gap-2 ${opt.disabled ? "opacity-50 cursor-not-allowed" : ""}`} key={opt.value}>
+                            <RadioGroupItem value={opt.value} id={opt.value} disabled={!!opt.disabled} />
+                            <label htmlFor={opt.value} className="text-sm">{opt.label}</label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    );
+                  }
+                  if (field.type === "dropdown") {
+                    return (
+                      <select
+                        key={field.id ?? field.name}
+                        value={formData[field.name] || ""}
+                        onChange={(e) => handleChange(field.name, e.target.value)}
+                        className={`w-full rounded border px-3 py-2 ${fieldErrors[field.name] ? "border-red-500" : "border-gray-300"}`}
+                        disabled={!!field.disabled}
+                        required={!!field.required}
+                      >
+                        <option value="" disabled>{field.label}</option>
+                        {('options' in field && Array.isArray(field.options)) && field.options.map((opt: any) => (
+                          <option key={opt.value} value={opt.value} disabled={!!opt.disabled}>{opt.label}</option>
+                        ))}
+                      </select>
+                    );
+                  }
+                  if (field.type === "checkbox") {
+                    return (
+                      <label key={field.id ?? field.name} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={!!formData[field.name]}
+                          onChange={e => handleChange(field.name, !!e.target.checked)}
+                          disabled={!!field.disabled}
+                          required={!!field.required}
+                        />
+                        {field.label}
+                      </label>
+                    );
+                  }
+                  return null;
+                })}
+                {/* Special: Same as phone checkbox for WhatsApp (optional, only if section has a whatsapp field) */}
+                {section.fields.some(f => f.name === "whatsapp") && (
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={sameAsPhone}
+                      onChange={handleSameAsPhoneToggle}
+                    />
+                    Same as phone number
                   </label>
-                </div>
-                <div className="flex items-center gap-2 opacity-50 cursor-not-allowed">
-                  <RadioGroupItem value="upi" id="upi" disabled />
-                  <label htmlFor="upi" className="text-sm">
-                    UPI (Coming Soon)
-                  </label>
-                </div>
-              </RadioGroup>
-            </CardContent>
-          </Card>
-
+                )}
+              </CardContent>
+            </Card>
+          ))}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
