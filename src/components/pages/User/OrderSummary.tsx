@@ -101,7 +101,7 @@ export default function OrderSummary() {
   const handleSameAsPhoneToggle = () => {
     const newValue = !sameAsPhone;
     setSameAsPhone(newValue);
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       whatsapp: newValue ? prev.phone : "",
     }));
@@ -130,7 +130,9 @@ export default function OrderSummary() {
   var data = JSON.parse(JSON.stringify(cart)) as IOrder; // Deep clone to avoid mutating store
   data.checkoutdata = formData;
   // Remove id from update payload to avoid identity column error
-  if ('id' in data) delete data.id;
+    if (data && typeof data === 'object' && 'id' in data) {
+      delete (data as Partial<IOrder>).id;
+    }
   updateOrder(orderId, data as IOrder).then(async (order) => {
       if (!order) {
         toast.error("Failed to update order. Please try again.");
