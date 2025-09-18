@@ -254,29 +254,29 @@ export default function OrderSummary() {
                 </h2>
                 {cartitems.map((item, idx) => (
                   <div
-                  key={idx}
-                  className="flex gap-4 border-b py-4 text-sm relative"
-                >
-                  <img
-                    src={item.product.imageUrls?.[0]}
-                    alt={item.product.name}
-                    className="w-16 h-16 object-cover rounded-md"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-800 truncate">
-                        {item.product.name}
-                      </p>
-                      {item.product.shortdescription && (
-                        <span className="text-xs text-gray-500 line-clamp-1">{item.product.shortdescription}</span>
-                      )}
-                    </div>
-                    {item.selectedOptions &&
-                      Object.entries(item.selectedOptions).map(([variantName, option]) => (
-                        <p key={variantName} className="text-gray-500 text-xs">
-                          {variantName}: <span className="font-medium">{option?.name}</span>
-                        </p>
-                      ))}
+                    key={idx}
+                    className="flex gap-4 border-b py-4 text-sm relative"
+                  >
+                    <img
+                      src={item.product.imageUrls?.[0]}
+                      alt={item.product.name}
+                      className="w-16 h-16 object-cover rounded-md"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-800 truncate">
+                          {item.product.name}
+                        </span>
+                        {item.product.shortdescription && (
+                          <span className="text-xs text-gray-500 line-clamp-1">{item.product.shortdescription}</span>
+                        )}
+                      </div>
+                      {item.selectedOptions &&
+                        Object.entries(item.selectedOptions).map(([variantName, option]) => (
+                          <div key={variantName} className="text-gray-500 text-xs">
+                            {variantName}: <span className="font-medium">{option?.name}</span>
+                          </div>
+                        ))}
                     <div className="flex justify-between items-center mt-3 flex-wrap gap-2">
                       <div className="flex items-center bg-gray-100 rounded-full px-2 py-1">
                         <Button

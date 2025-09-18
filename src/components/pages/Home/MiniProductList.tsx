@@ -38,7 +38,7 @@ const MiniProductList = () => {
   }, [cartItemCount]);
 
   return (
-    <div className="bg-[#fff] w-full flex flex-col items-center py-2 px-4">
+    <div className="bg-[#fff] w-full flex flex-col items-center">
       {/* Section Title */}
       <div className="w-full text-center">
         {/* <p className="text-sm text-green-500 mb-1">Select Products</p> */}
