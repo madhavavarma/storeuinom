@@ -118,41 +118,44 @@ export default function OrderSummary() {
     data.checkoutdata = formData;
 
     updateOrder(orderId, data as IOrder).then(async (order) => {
-
       if (!order) {
         toast.error("Failed to update order. Please try again.");
         return;
       }
-
-        setIsSendingEmail(true);
-        try {
-          await emailjs.send(
-            "service_dek6sgr",
-            "template_ql4ymg9",
-            {
-              to_email: email,
-              user_phone: phone,
-              user_email: email,
-              user_address: address,
-              user_city: city,
-              user_pincode: pincode,
-              cart_items: JSON.stringify(cartitems, null, 2),
-              total_amount: totalAmount.toFixed(2),
-              order_id: orderId,
-            },
-            "efiQJ5NNt1J3GJD--"
-          );
-          console.log("Order updated successfully! Confirmation email sent.");
-          dispatch(OrdersActions.clearCart());
-
-          navigationHelper.goToThankYou(orderId);
-        } catch (error) {
-          console.error("Email sending error:", error);
-          toast.error("Order updated, but confirmation email failed.");
-        } finally {
-          setIsSendingEmail(false);
+      setIsSendingEmail(true);
+      let emailFailed = false;
+      try {
+        await emailjs.send(
+          "service_dek6sgr",
+          "template_ql4ymg9",
+          {
+            to_email: email,
+            user_phone: phone,
+            user_email: email,
+            user_address: address,
+            user_city: city,
+            user_pincode: pincode,
+            cart_items: JSON.stringify(cartitems, null, 2),
+            total_amount: totalAmount.toFixed(2),
+            order_id: orderId,
+          },
+          "efiQJ5NNt1J3GJD--"
+        );
+        console.log("Order updated successfully! Confirmation email sent.");
+      } catch (error) {
+        emailFailed = true;
+        console.error("Email sending error:", error);
+      } finally {
+        setIsSendingEmail(false);
+        dispatch(OrdersActions.clearCart());
+        if (emailFailed) {
+          toast.error("Order updated, but confirmation email failed. Proceeding anyway.");
+        } else {
+          toast.success("Order updated successfully! Confirmation email sent.");
         }
-      })
+        navigationHelper.goToThankYou(orderId);
+      }
+    })
   };
 
   const handleRemoveItem = (item: any) => {
