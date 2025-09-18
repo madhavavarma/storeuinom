@@ -19,7 +19,6 @@ import { useNavigationHelper } from "@/hooks/use-navigate-helper";
 import { IOption } from "@/interfaces/IProduct";
 import { ProductActions } from "@/store/ProductSlice";
 import emailjs from "@emailjs/browser";
-import { ICheckout } from "@/interfaces/ICheckout";
 import { getAppSettings } from "@/helpers/api";
 import { IAppSettings } from "@/interfaces/IAppSettings";
 import { deleteOrder, updateOrder } from "@/helpers/api";
