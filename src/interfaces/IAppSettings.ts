@@ -17,22 +17,26 @@ export interface IAppSettings {
     features?: { title?: string; description?: string; icon?: string }[];
     homeCarousels?: { heading?: string; label?: string }[];
     checkoutSections?: Array<{
-      id: number;
+      id: string;
       title: string;
       fields: Array<{
-        id: number;
+        id: string;
         name: string;
         label: string;
         type: 'text' | 'textarea' | 'radio' | 'dropdown' | 'checkbox';
         required?: boolean;
+        defaultValue?: string;
         disabled?: boolean;
-        defaultValue?: string | boolean;
-        options?: Array<{
-          label: string;
-          value: string;
-          disabled?: boolean;
-          defaultValue?: boolean;
-        }>;
+        /**
+         * For text/textarea fields only: regex validation pattern.
+         * If provided, input must match this regex, otherwise show errorMessage.
+         */
+        regex?: string;
+        /**
+         * Error message to show if regex is provided and input does not match.
+         */
+        regexError?: string;
+        options?: Array<{ label: string; value: string; disabled?: boolean }>;
       }>;
     }>;
   };

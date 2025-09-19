@@ -40,7 +40,7 @@ export default function CheckoutPage() {
   const [appSettings, setAppSettings] = useState<IAppSettings | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [sameAsPhone, setSameAsPhone] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string | boolean }>({});
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Load app settings from Supabase branding
@@ -78,9 +78,23 @@ export default function CheckoutPage() {
     setSameAsPhone(formData.whatsapp === formData.phone && formData.whatsapp !== "");
   }, [formData]);
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: any, regex?: string, errorMessage?: string) => {
     setFormData((prev: Record<string, any>) => ({ ...prev, [field]: value }));
-    setFieldErrors((prev: Record<string, boolean>) => ({ ...prev, [field]: false }));
+    // If regex is provided, validate immediately
+    if (regex && value !== undefined) {
+      try {
+        const re = new RegExp(regex);
+        if (!re.test(value)) {
+          setFieldErrors((prev: Record<string, string | boolean>) => ({ ...prev, [field]: errorMessage || 'Invalid format' }));
+        } else {
+          setFieldErrors((prev: Record<string, string | boolean>) => ({ ...prev, [field]: false }));
+        }
+      } catch {
+        setFieldErrors((prev: Record<string, string | boolean>) => ({ ...prev, [field]: errorMessage || 'Invalid regex' }));
+      }
+    } else {
+      setFieldErrors((prev: Record<string, string | boolean>) => ({ ...prev, [field]: false }));
+    }
   };
 
   const handleSameAsPhoneToggle = () => {
@@ -93,18 +107,29 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
-    // Validate required fields from config
-    const errors: { [key: string]: boolean } = {};
+    // Validate required fields and regex from config
+    const errors: { [key: string]: string | boolean } = {};
     appSettings?.branding?.checkoutSections?.forEach(section => {
       section.fields.forEach(field => {
         if (field.required && !formData[field.name]) {
           errors[field.name] = true;
         }
+        // Regex validation for text/textarea
+        if ((field.type === 'text' || field.type === 'textarea') && field.regex && formData[field.name]) {
+          try {
+            const re = new RegExp(field.regex);
+            if (!re.test(formData[field.name])) {
+              errors[field.name] = field.regexError || 'Invalid format';
+            }
+          } catch {
+            errors[field.name] = field.regexError || 'Invalid regex';
+          }
+        }
       });
     });
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
-      toast.error("Please fill all required fields");
+      toast.error("Please fill all required fields correctly");
       return;
     }
 
@@ -335,38 +360,46 @@ export default function CheckoutPage() {
             <Card key={section.id}>
               <CardContent className="p-4 space-y-4">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
-                  {section.id === 1 && <Phone className="w-4 h-4" />} 
-                  {section.id === 2 && <MapPin className="w-4 h-4" />} 
-                  {section.id === 3 && <Wallet className="w-4 h-4" />} 
+                  {section.id === '1' && <Phone className="w-4 h-4" />} 
+                  {section.id === '2' && <MapPin className="w-4 h-4" />} 
+                  {section.id === '3' && <Wallet className="w-4 h-4" />} 
                   {section.title}
                 </h2>
                 {section.fields.map((field) => {
                   if (field.type === "text") {
                     return (
-                      <Input
-                        key={field.id ?? field.name}
-                        type={field.name === "email" ? "email" : "text"}
-                        placeholder={field.label}
-                        value={formData[field.name] || ""}
-                        onChange={(e) => handleChange(field.name, e.target.value)}
-                        className={fieldErrors[field.name] ? "border-red-500" : ""}
-                        disabled={!!field.disabled}
-                        required={!!field.required}
-                      />
+                      <div key={field.id ?? field.name} className="space-y-1">
+                        <Input
+                          type={field.name === "email" ? "email" : "text"}
+                          placeholder={field.label}
+                          value={formData[field.name] || ""}
+                          onChange={(e) => handleChange(field.name, e.target.value, field.regex, field.regexError)}
+                          className={fieldErrors[field.name] ? "border-red-500" : ""}
+                          disabled={!!field.disabled}
+                          required={!!field.required}
+                        />
+                        {fieldErrors[field.name] && typeof fieldErrors[field.name] === 'string' && (
+                          <span className="text-xs text-red-500">{fieldErrors[field.name]}</span>
+                        )}
+                      </div>
                     );
                   }
                   if (field.type === "textarea") {
                     return (
-                      <textarea
-                        key={field.id ?? field.name}
-                        placeholder={field.label}
-                        value={formData[field.name] || ""}
-                        onChange={(e) => handleChange(field.name, e.target.value)}
-                        className={`w-full rounded border px-3 py-2 ${fieldErrors[field.name] ? "border-red-500" : "border-gray-300"}`}
-                        rows={3}
-                        disabled={!!field.disabled}
-                        required={!!field.required}
-                      />
+                      <div key={field.id ?? field.name} className="space-y-1">
+                        <textarea
+                          placeholder={field.label}
+                          value={formData[field.name] || ""}
+                          onChange={(e) => handleChange(field.name, e.target.value, field.regex, field.regexError)}
+                          className={`w-full rounded border px-3 py-2 ${fieldErrors[field.name] ? "border-red-500" : "border-gray-300"}`}
+                          rows={3}
+                          disabled={!!field.disabled}
+                          required={!!field.required}
+                        />
+                        {fieldErrors[field.name] && typeof fieldErrors[field.name] === 'string' && (
+                          <span className="text-xs text-red-500">{fieldErrors[field.name]}</span>
+                        )}
+                      </div>
                     );
                   }
                   if (field.type === "radio") {
