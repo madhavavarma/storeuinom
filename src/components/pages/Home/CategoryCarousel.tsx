@@ -8,7 +8,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/swiper.min.css'
 
 const CategoryCarousel = () => {
-  const categories = useSelector((state: IState) => state.Categories.categories);
+  const categories = useSelector((state: IState) => state.Categories.categories) || [];
   const [swiper, setSwiper] = useState<any>(null);
   const [showPulse, setShowPulse] = useState(true);
 
@@ -60,7 +60,7 @@ const CategoryCarousel = () => {
             1024: { slidesPerView: 5 },
           }}
         >
-          {categories.map((category, index) => (
+          {(categories || []).map((category, index) => (
             <SwiperSlide key={index}>
               <div className="p-1">
                 <div className="rounded-none border-none bg-transparent shadow-none">

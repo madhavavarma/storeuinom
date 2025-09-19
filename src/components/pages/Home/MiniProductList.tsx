@@ -9,6 +9,7 @@ import { IState } from "@/store/interfaces/IState";
 
 const MiniProductList = () => {
   const products = useSelector((state: IState) => state.Products.products);
+  const categories = useSelector((state: IState) => state.Categories.categories);
   const [showCart, setShowCart] = useState(false);
   // Track if cart drawer has been auto-opened after first add
   const hasAutoOpenedRef = useRef(false);
@@ -51,9 +52,15 @@ const MiniProductList = () => {
       {/* Product Grid */}
       <div className="w-full">
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-5 md:gap-2 justify-start">
-          {products.slice(0,10).map((product) => (
-            <Product2 key={product.id} product={product} isHideDrawer={false} />
-          ))}
+          {products
+            .filter((product) => {
+              const cat = categories.find((c) => String(c.id) === String(product.categoryid));
+              return cat?.is_published;
+            })
+            .slice(0, 10)
+            .map((product) => (
+              <Product2 key={product.id} product={product} isHideDrawer={false} />
+            ))}
         </div>
       </div>
 

@@ -38,13 +38,15 @@ const ProductList = () => {
 
 
   const filteredProducts = products
-    // .filter((product: IProduct) => product.isPublished)
     .filter((product: IProduct) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.labels.some(lbl => lbl.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesCategory = category == "0" || product.category == category;
-      return matchesSearch && matchesCategory;
+      const matchesCategory = category == "0" || String(product.categoryid ?? "") === category;
+      // Find the category for this product
+      const cat = categories.find((c) => String(c.id) === String(product.categoryid));
+      const categoryIsPublished = cat?.is_published;
+      return matchesSearch && matchesCategory && categoryIsPublished;
     })
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
@@ -154,7 +156,7 @@ const ProductList = () => {
                   {"All"}
                 </SelectItem>
               {categories.map(cat => (
-                <SelectItem key={cat.id} value={cat.id.toString()}>
+                <SelectItem key={cat.id} value={cat.id?.toString?.() ?? ""}>
                   {cat.name}
                 </SelectItem>
               ))}

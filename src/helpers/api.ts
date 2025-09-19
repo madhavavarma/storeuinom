@@ -73,11 +73,14 @@ export const getProducts = async (): Promise<IProduct[]> => {
 
 export const getCategories = async (): Promise<ICategory[]> => {
   if (isMock) {
-    return categoriesMock;
+    return categoriesMock.filter((cat: any) => cat.ispublished);
   } else {
-    return (await supabase
-      .from("categories")
-      .select("*")).data as ICategory[];
+    return (
+      await supabase
+        .from("categories")
+        .select("*")
+        .eq("is_published", true)
+    ).data as ICategory[];
   }
 };
 
