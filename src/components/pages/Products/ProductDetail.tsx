@@ -126,6 +126,9 @@ const ProductDetail = ({ product, closeRightDrawer }: IProps) => {
           {product.shortdescription && (
             <span className="block text-xs text-gray-500 line-clamp-1">{product.shortdescription}</span>
           )}
+          {product.deliverydescription && (
+            <span className="block text-xs text-green-700 line-clamp-1 font-medium italic">{product.deliverydescription}</span>
+          )}
         </div>
 
         {/* Variant and Quantity Card */}

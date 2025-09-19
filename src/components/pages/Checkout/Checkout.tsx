@@ -274,6 +274,9 @@ export default function CheckoutPage() {
                         {item.product.shortdescription && (
                           <span className="block text-xs text-gray-500 line-clamp-1">{item.product.shortdescription}</span>
                         )}
+                        {item.product.deliverydescription && (
+                          <span className="block text-xs text-green-700 line-clamp-1 font-medium italic">{item.product.deliverydescription}</span>
+                        )}
                       </div>
                       {item.selectedOptions &&
                         Object.entries(item.selectedOptions).map(([variantName, option]) => (
