@@ -74,7 +74,16 @@ const ProductDetail = ({ product, closeRightDrawer }: IProps) => {
     return parseFloat(((selectedOptionPrices) * quantity).toFixed(2));
   };
 
+
+  // Out of stock logic: if all published options of all published variants are out of stock
+  const isOutOfStock = product.productvariants && product.productvariants.length > 0
+    ? product.productvariants.filter(v => v.ispublished).every(variant =>
+        variant.productvariantoptions.filter(o => o.ispublished).every(option => option.isoutofstock)
+      )
+    : false;
+
   const allOptionsSelected =
+    !isOutOfStock &&
     selectedOptions &&
     Object.values(selectedOptions).every((option) => option !== null) &&
     Object.keys(selectedOptions).length === (product.productvariants?.filter(v => v.ispublished).length || 0);
@@ -82,6 +91,12 @@ const ProductDetail = ({ product, closeRightDrawer }: IProps) => {
   return (
     <div className="height-full flex flex-col">
       <div className="w-full px-4 pb-10 space-y-4 mb-[60px]">
+        {/* Out of Stock Note */}
+        {isOutOfStock && (
+          <div className="mb-4 w-full bg-red-500 text-white text-xs font-bold px-2 py-2 rounded shadow-md text-center">
+            Out of Stock
+          </div>
+        )}
         {/* Product Image Slider */}
         <Carousel className="w-full max-w-xs mx-auto">
           <CarouselContent>
@@ -208,7 +223,7 @@ const ProductDetail = ({ product, closeRightDrawer }: IProps) => {
         <Button
           className="bg-[#5DBF13] text-white px-4 py-2 rounded-lg w-full hover:bg-green-700 disabled:opacity-50"
           onClick={handleAddToCart}
-          disabled={!allOptionsSelected}
+          disabled={isOutOfStock || !allOptionsSelected}
         >
           Add to Cart
         </Button>

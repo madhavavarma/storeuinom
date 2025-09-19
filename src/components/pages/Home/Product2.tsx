@@ -9,12 +9,22 @@ interface ProductProps {
   isHideDrawer?: boolean;
 }
 
+
 const Product2 = ({ product }: ProductProps) => {
-  const { name, price, imageUrls } = product;
+  const { name, price, imageUrls, productvariants } = product;
   const dispatch = useDispatch();
 
+  // Out of stock logic: if all published options of all published variants are out of stock
+  const isOutOfStock = productvariants && productvariants.length > 0
+    ? productvariants.filter(v => v.ispublished).every(variant =>
+        variant.productvariantoptions.filter(o => o.ispublished).every(option => option.isoutofstock)
+      )
+    : false;
+
   const setProudctDetail = () => {
-    dispatch(ProductActions.setProductDetail(product));
+    if (!isOutOfStock) {
+      dispatch(ProductActions.setProductDetail(product));
+    }
   };
 
   const rating = 5;
@@ -22,9 +32,17 @@ const Product2 = ({ product }: ProductProps) => {
 
   return (
     <div
-      className="aspect-[2/2] bg-white border border-gray-200 rounded shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col"
+      className={`aspect-[2/2] bg-white border border-gray-200 rounded shadow-sm flex flex-col transition-all relative ${isOutOfStock ? 'opacity-60 pointer-events-none' : 'hover:shadow-md cursor-pointer'}`}
       onClick={setProudctDetail}
+      tabIndex={isOutOfStock ? -1 : 0}
+      aria-disabled={isOutOfStock}
     >
+      {/* Out of Stock Note */}
+      {isOutOfStock && (
+        <div className="absolute top-2 left-2 right-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-md text-center">
+          Out of Stock
+        </div>
+      )}
       {/* Product Image */}
       <div
         className="relative w-full h-48 rounded-t bg-center bg-no-repeat bg-cover"
@@ -48,7 +66,6 @@ const Product2 = ({ product }: ProductProps) => {
       {/* Info Section */}
       <div className="flex flex-col justify-between flex-grow px-3 py-3 space-y-2">
        {/* Rating + Price */}
-      
       <div className="flex items-center justify-between">
         <div className="flex items-center text-sm text-gray-700 gap-2">
           <span className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-md font-medium">
