@@ -81,13 +81,16 @@ const Product2 = ({ product }: ProductProps) => {
         </span>
       </div>
 
-        {/* Product Name and Short Description */}
+        {/* Product Name, Short Description, and Delivery Description */}
         <div className="min-h-[42px]">
           <p className="font-bold text-gray-900 line-clamp-2 uppercase" style={{ fontSize: '12px', letterSpacing: '0.1px' }}>
             {name}
           </p>
           {product.shortdescription && (
             <span className="block text-xs text-gray-500 line-clamp-1 mt-1">{product.shortdescription}</span>
+          )}
+          {product.deliverydescription && (
+            <span className="block text-xs text-green-700 line-clamp-1 mt-1 font-medium italic">{product.deliverydescription}</span>
           )}
         </div>
       </div>
